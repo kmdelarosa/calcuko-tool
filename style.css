@@ -47,3 +47,13 @@ table, th, td {
   padding-right:1px;
   font-size:25px;
 }
+
+.notification {
+  width:345px;
+  height:75px;
+  position: absolute;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  padding-block: 1px;
+}

@@ -1,6 +1,8 @@
 
 document.addEventListener('DOMContentLoaded', () => { 'use strict';
 
+    document.getElementById("notif").style.visibility = "hidden";
+
     document.getElementById("workspace").value = "";
 
     document.getElementById("workspace").onkeypress = function(e) { 
@@ -10,10 +12,18 @@ document.addEventListener('DOMContentLoaded', () => { 'use strict';
 
 function buttonClick(value){
     
-    var funcOnly = /['sqrd'|sqrt|=]/g;
+    var funcOnly = /['sqrd'|sqrt]/g;
+    var calculation = '';
     
     if(value.match(funcOnly) == null){
-        document.getElementById("workspace").value = (document.getElementById("workspace").value + value);
+        if(value != '='){
+            document.getElementById("workspace").value = (document.getElementById("workspace").value + value);
+        }
+        else{
+            calculation = document.getElementById("workspace").value;
+            processCalculation(calculation);
+        }
+        
     }    
 }
 
@@ -34,6 +44,26 @@ function processInputValues(event,source){
 
     return '';
     
+}
+
+function processCalculation(value){
+
+    // Parentheses first
+    // Exponents (ie Powers and Square Roots, etc.)
+    // Multiplication and Division (left-to-right)
+    // Addition and Subtraction (left-to-right)
+
+    var operatorsOnly = /[+|-|/|*|(|)]/g;
+    var rightOperands, leftOperands, splitValues;
+
+    if(value.includes('(') && value.includes(')')){
+        
+    }
+
+    if((value.includes('(') && !value.includes(')')) || (!value.includes('(') && value.includes(')'))){
+        document.getElementById("notif").innerHTML = 'Invalid input value';
+        document.getElementById("notif").style.visibility = "visible";
+    }
 }
 
 function add(a,b){
