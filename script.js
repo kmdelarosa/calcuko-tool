@@ -6,11 +6,16 @@ document.addEventListener('DOMContentLoaded', () => { 'use strict';
     document.getElementById("workspace").onkeypress = function(e) { 
         return processInputValues(event,'input'); 
     };
-
-    // document.addEventListener('keydown', event => { 
-    //     document.getElementById("workspace").value = processInputValues(event,'keydown');
-    // });
 });
+
+function buttonClick(value){
+    
+    var funcOnly = /['sqrd'|sqrt|=]/g;
+    
+    if(value.match(funcOnly) == null){
+        document.getElementById("workspace").value = (document.getElementById("workspace").value + value);
+    }    
+}
 
 function processInputValues(event,source){
     
@@ -19,14 +24,8 @@ function processInputValues(event,source){
 
     const inputValue = event.key.toLowerCase(); 
     
-    // if(source == 'keydown'){
-    //     if(isNaN(inputValue) == false){
-    //         return (document.getElementById("workspace").value + inputValue);
-    //     }
-    // }
-
     if(source == 'input'){
-        if (inputValue.match(digitsOnly) || inputValue.match(operatorsOnly)) {
+        if (inputValue.match(digitsOnly) != null || inputValue.match(operatorsOnly) != null) {
             return true;
         } else {
             return false;
@@ -115,5 +114,9 @@ function recallCalc(){
 
 function clearMemory(){
     // To clear the memory value, click on the "clear" button twice.
+}
+
+function clearArea(){
+
 }
     
