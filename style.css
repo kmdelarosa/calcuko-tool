@@ -1,0 +1,48 @@
+.tool {
+  width: 345px;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.history {
+  height:100px;
+  color: #ffffff;
+}
+
+.history, .calculator {
+  display: inline-block;
+  text-align:center;
+  padding-left:2px;
+}
+
+table, th, td {
+  border: 1px solid black;
+}
+
+.key {
+  width:50px;
+  height:50px;
+  font-size:15px;
+}
+
+.num-key {
+  font-size:25px;
+}
+
+.func-key, .tool {
+  background-color: #0042ad;
+  color: #ffffff;
+  font-size:18px;
+}
+
+.key-equal {
+  width:105px;
+}
+
+.workspace {
+  width:325px;
+  height:75px;
+  padding-right:1px;
+}
