@@ -9,6 +9,15 @@
 .history {
   height:100px;
   color: #ffffff;
+  overflow: auto;
+}
+
+.history-table {
+  width: 340px;
+}
+
+.history-item {
+  width: 328px;
 }
 
 .history, .calculator {

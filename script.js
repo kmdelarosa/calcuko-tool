@@ -1,19 +1,23 @@
+var arrHead = new Array();
+arrHead = ['']; 
 
 document.addEventListener('DOMContentLoaded', () => { 'use strict';
 
     document.getElementById("notif").style.visibility = "hidden";
-
     document.getElementById("workspace").value = "";
 
+    createTable();
+
     document.getElementById("workspace").onkeypress = function(e) { 
-        return processInputValues(event,'input'); 
+        return processInputValues(event.key,'input'); 
     };
 });
 
 function buttonClick(value){
     
     var funcOnly = /['sqrd'|sqrt]/g;
-    var calculation = '';
+    var calculation = '', answer;
+    var inputValidation;
     
     if(value.match(funcOnly) == null){
         if(value != '='){
@@ -21,25 +25,41 @@ function buttonClick(value){
         }
         else{
             calculation = document.getElementById("workspace").value;
-            processCalculation(calculation);
+            inputValidation = processInputValues(calculation,'input');
+            
+            if(inputValidation !== 'invalid') {
+                
+                answer = processCalculation(calculation);
+
+                addRow(calculation+' = '+answer);
+                document.getElementById("workspace").value = '';
+            }
         }
-        
     }    
 }
 
-function processInputValues(event,source){
+function processInputValues(value,source){
     
     var digitsOnly = /[1234567890]/g;
     var operatorsOnly = /[+|-|/|*|%|(|)]/g;
 
-    const inputValue = event.key.toLowerCase(); 
+    const inputValue = value.toLowerCase();
+    var result; 
     
     if(source == 'input'){
         if (inputValue.match(digitsOnly) != null || inputValue.match(operatorsOnly) != null) {
-            return true;
+            result = true;
         } else {
-            return false;
+            result = false;
         }
+
+        if((value.includes('(') && !value.includes(')')) || (!value.includes('(') && value.includes(')'))){
+            document.getElementById("notif").innerHTML = 'Invalid input value';
+            document.getElementById("notif").style.visibility = "visible";
+            result = 'invalid';
+        }
+
+        return result;
     }
 
     return '';
@@ -55,14 +75,48 @@ function processCalculation(value){
 
     var operatorsOnly = /[+|-|/|*|(|)]/g;
     var rightOperands, leftOperands, splitValues;
+    var answer = '';
 
-    if(value.includes('(') && value.includes(')')){
-        
+    return answer;
+}
+
+function createTable() {
+    
+    var historyTable = document.createElement('table');
+    historyTable.setAttribute('id', 'historyTable');            
+    historyTable.setAttribute('class', 'history-table');
+
+    var tr = historyTable.insertRow(-1);
+
+    for (var h = 0; h < arrHead.length; h++) {
+        var th = document.createElement('th');          
+        th.innerHTML = arrHead[h];
+        tr.appendChild(th);
     }
 
-    if((value.includes('(') && !value.includes(')')) || (!value.includes('(') && value.includes(')'))){
-        document.getElementById("notif").innerHTML = 'Invalid input value';
-        document.getElementById("notif").style.visibility = "visible";
+    var div = document.getElementById('history');
+    div.appendChild(historyTable);    
+}
+
+function addRow(calculation) {
+    var historyTable = document.getElementById('historyTable');
+
+    var count = historyTable.rows.length;        
+    var tr = historyTable.insertRow(count);      
+    tr = historyTable.insertRow(count);
+
+    for (var c = 0; c < arrHead.length; c++) {
+        var td = document.createElement('td');          
+        td = tr.insertCell(c);
+
+        var ele = document.createElement('input');
+        ele.setAttribute('type', 'text');
+        ele.setAttribute('value', calculation);
+        ele.setAttribute('readonly', true); 
+        ele.setAttribute('id', 'calc'+c);
+        ele.setAttribute('class', 'calc'+c+' history-item');
+        td.appendChild(ele);
+        
     }
 }
 
@@ -143,10 +197,15 @@ function recallCalc(){
 }
 
 function clearMemory(){
-    // To clear the memory value, click on the "clear" button twice.
+    // deletes all stored history
+    var historyTable = document.getElementById('historyTable');
+
+    while(historyTable.rows.length > 0) {
+        historyTable.deleteRow(0);
+    } 
 }
 
 function clearArea(){
-
+    document.getElementById("workspace").value = '';
 }
     
