@@ -1,61 +1,71 @@
 var arrHead = new Array();
-arrHead = ['']; 
+arrHead = [''];
 
-document.addEventListener('DOMContentLoaded', () => { 'use strict';
+document.addEventListener('DOMContentLoaded', () => {
+    'use strict';
 
-    document.getElementById("notif").style.visibility = "hidden";
+    // document.getElementById("notif").style.visibility = "hidden";
+    hideErrorExpression();
     document.getElementById("workspace").value = "";
 
     createTable();
 
-    document.getElementById("workspace").onkeypress = function(e) { 
-        return processInputValues(event.key,'input'); 
+    document.getElementById("workspace").onkeypress = function (e) {
+        return processInputValues(event.key, 'input');
     };
 });
 
-function buttonClick(value){
-    
+function buttonClick(value) {
+
     var funcOnly = /['sqrd'|sqrt]/g;
-    var calculation = '', answer;
+    var calculation = '', answer = '';
     var inputValidation;
-    
-    if(value.match(funcOnly) == null){
-        if(value != '='){
+
+    if (value.match(funcOnly) == null) {
+        if (value != '=') {
             document.getElementById("workspace").value = (document.getElementById("workspace").value + value);
         }
-        else{
-            calculation = document.getElementById("workspace").value;
-            inputValidation = processInputValues(calculation,'input');
-            
-            if(inputValidation !== 'invalid') {
-                
-                answer = processCalculation(calculation);
+        else {
+            hideErrorExpression();
 
-                addRow(calculation+' = '+answer);
-                document.getElementById("workspace").value = '';
+            calculation = document.getElementById("workspace").value;
+            inputValidation = processInputValues(calculation, 'input');
+
+            if (inputValidation !== 'invalid') {
+
+                postFixNotation = processCalculation(calculation);
+                answer = solvePostFixNotation(postFixNotation);
+
+                if(checkNumeric(answer)){
+                    addRow(calculation + ' = ' + answer);
+                    document.getElementById("workspace").value = '';
+                }
+                else{
+                    showErrorExpression('Malformed Expression');
+                }
+                
             }
         }
-    }    
+    }
 }
 
-function processInputValues(value,source){
-    
+function processInputValues(value, source) {
+
     var digitsOnly = /[1234567890]/g;
     var operatorsOnly = /[+|-|/|*|%|(|)]/g;
 
     const inputValue = value.toLowerCase();
-    var result; 
-    
-    if(source == 'input'){
+    var result;
+
+    if (source == 'input') {
         if (inputValue.match(digitsOnly) != null || inputValue.match(operatorsOnly) != null) {
             result = true;
         } else {
             result = false;
         }
 
-        if((value.includes('(') && !value.includes(')')) || (!value.includes('(') && value.includes(')'))){
-            document.getElementById("notif").innerHTML = 'Invalid input value';
-            document.getElementById("notif").style.visibility = "visible";
+        if ((value.includes('(') && !value.includes(')')) || (!value.includes('(') && value.includes(')'))) {
+            showErrorExpression('Invalid input value');
             result = 'invalid';
         }
 
@@ -63,116 +73,190 @@ function processInputValues(value,source){
     }
 
     return '';
-    
+
 }
 
-function processCalculation(value){
+function removeSpaces(arrayValues) {
+    for (var i = 0; i < arrayValues.length; i++) {
+        if (arrayValues[i] === "") {
+            arrayValues.splice(i, 1);
+        }
+    }
 
-    // Parentheses first
-    // Exponents (ie Powers and Square Roots, etc.)
-    // Multiplication and Division (left-to-right)
-    // Addition and Subtraction (left-to-right)
+    return arrayValues;
+}
 
-    var operatorsOnly = /[+|-|/|*|(|)]/g;
-    var rightOperands, leftOperands, splitValues;
-    var answer = '';
+function checkNumeric(value) {
 
-    return answer;
+    return !isNaN(parseFloat(value)) && isFinite(value);
+
+}
+
+function showErrorExpression(message){
+    document.getElementById("notif").innerHTML = message;
+    document.getElementById("notif").style.visibility = "visible";  
+}
+
+function hideErrorExpression(){
+    document.getElementById("notif").style.visibility = "hidden"; 
+}
+
+function processCalculation(value) {
+
+    var outputQueue = "";
+    var operatorStack = [];
+
+    var operators = {
+        "√": { precedence: 4, associativity: "Left" },
+        "^": { precedence: 4, associativity: "Right" },
+        "/": { precedence: 3, associativity: "Left" },
+        "*": { precedence: 3, associativity: "Left" },
+        "+": { precedence: 2, associativity: "Left" },
+        "-": { precedence: 2, associativity: "Left" }
+    }
+
+    val = value.replace(/\s+/g, "");
+    value = val.split(/([\+\-\*\/\^\(\)\√])/);
+    value = removeSpaces(value);
+
+    for (var i = 0; i < value.length; i++) {
+        var token = value[i];
+
+        if (checkNumeric(token)) {
+            outputQueue += token + " ";
+        } else if ("^*/+-√".indexOf(token) !== -1) {
+            var o1 = token;
+            var o2 = operatorStack[operatorStack.length - 1];
+            while ("^*/+-√".indexOf(o2) !== -1 && ((operators[o1].associativity === "Left" && operators[o1].precedence <= operators[o2].precedence) || (operators[o1].associativity === "Right" && operators[o1].precedence < operators[o2].precedence))) {
+                outputQueue += operatorStack.pop() + " ";
+                o2 = operatorStack[operatorStack.length - 1];
+            }
+            operatorStack.push(o1);
+        } else if (token === "(") {
+            operatorStack.push(token);
+        } else if (token === ")") {
+            while (operatorStack[operatorStack.length - 1] !== "(") {
+                outputQueue += operatorStack.pop() + " ";
+            }
+            operatorStack.pop();
+        }
+    }
+    while (operatorStack.length > 0) {
+        outputQueue += operatorStack.pop() + " ";
+    }
+    return outputQueue;
 }
 
 function createTable() {
-    
+
     var historyTable = document.createElement('table');
-    historyTable.setAttribute('id', 'historyTable');            
+    historyTable.setAttribute('id', 'historyTable');
     historyTable.setAttribute('class', 'history-table');
 
     var tr = historyTable.insertRow(-1);
 
     for (var h = 0; h < arrHead.length; h++) {
-        var th = document.createElement('th');          
+        var th = document.createElement('th');
         th.innerHTML = arrHead[h];
         tr.appendChild(th);
     }
 
     var div = document.getElementById('history');
-    div.appendChild(historyTable);    
+    div.appendChild(historyTable);
 }
 
 function addRow(calculation) {
     var historyTable = document.getElementById('historyTable');
 
-    var count = historyTable.rows.length;        
-    var tr = historyTable.insertRow(count);      
+    var count = historyTable.rows.length;
+    var tr = historyTable.insertRow(count);
     tr = historyTable.insertRow(count);
 
     for (var c = 0; c < arrHead.length; c++) {
-        var td = document.createElement('td');          
+        var td = document.createElement('td');
         td = tr.insertCell(c);
 
         var ele = document.createElement('input');
         ele.setAttribute('type', 'text');
         ele.setAttribute('value', calculation);
-        ele.setAttribute('readonly', true); 
-        ele.setAttribute('id', 'calc'+c);
-        ele.setAttribute('class', 'calc'+c+' history-item');
+        ele.setAttribute('readonly', true);
+        ele.setAttribute('id', 'calc' + c);
+        ele.setAttribute('class', 'calc' + c + ' history-item');
         td.appendChild(ele);
-        
+
     }
 }
 
-function add(a,b){
-    // Addition
-    // The addition (sum function) is used by clicking on the "+" button or using the keyboard. The function results in a+b.
-    return a+b;
+function solvePostFixNotation(postfix) {
+    
+    var resultStack = [];
+    postfix = postfix.split(" ");
+
+    for (var i = 0; i < postfix.length; i++) {
+        if (postfix[i] === "") {
+            postfix.splice(i, 1);
+        }
+    }
+
+    for (var i = 0; i < postfix.length; i++) {
+        
+        if (checkNumeric(postfix[i])) {
+            resultStack.push(postfix[i]);
+        } else {
+            var a = resultStack.pop();
+            var b = resultStack.pop();
+            if (postfix[i] === "+") {
+                resultStack.push(add(parseInt(a), parseInt(b)));
+            } else if (postfix[i] === "-") {
+                resultStack.push(sub(parseInt(b), parseInt(a)));
+            } else if (postfix[i] === "*") {
+                resultStack.push(multiply(parseInt(a), parseInt(b)));
+            } else if (postfix[i] === "/") {
+                resultStack.push(divide(parseInt(b), parseInt(a)));
+            } else if (postfix[i] === "^") {
+                resultStack.push(square(parseInt(a)));
+            } else if (postfix[i] === "√") {
+                resultStack.push(sRoot(parseInt(a)));
+            }
+        }
+    }
+
+    if (resultStack.length > 1) {
+        return "error";
+    } else {
+        return resultStack.pop();
+    }
 }
 
-function sub(a,b){
-    // Subtraction
-    // The subtraction (minus function) is used by clicking on the "-" button or using the keyboard. The function results in a-b.
-    return a-b;
+function add(a, b) {
+    return a + b;
 }
 
-function multiply(a,b){
-    // Multiplication
-    // The subtraction (minus function) is used by clicking on the "-" button or using the keyboard. The function results in a-b.
-    return a*b;
+function sub(a, b) {
+    return a - b;
 }
 
-function divide(a,b){
-    // Division
-    // The division (divide function) is used by clicking on the "/" button or using the keyboard "/" key. The function results in a/b.
-    return a/b;
+function multiply(a, b) {
+    return a * b;
 }
 
-function negative(a){
-    // Sign
-    // The sign key (negative key) is used by clicking on the "(-)" button or using the keyboard "m"key. The function results in -1*x.
-    return (-1*a);
+function divide(a, b) {
+    return a / b;
 }
 
-function square(a){
-    // Square
-    // The square function is used by clicking on the "x^2" button or using the keyboard shortcut "s". The function results in x*x
-    return a*a;
+function negative(a) {
+    return (-1 * a);
 }
 
-function sRoot(a){
-    // Square Root
-    // The square root function is used by clicking on the "x" button or using the keyboard shortcut "r". This function represents x^.5 where the result squared is equal to x.
+function square(a) {
+    return a * a;
+}
+
+function sRoot(a) {
     return Math.sqrt(a);
 }
 
-function mInverse(a){
-    // Inverse
-    // Multiplicative Inverse (reciprocal function) is used by pressing the "1/x" button or using the keyboard shortcut "i". This function is the same as x^-1 or dividing 1 by the number.
-}
-
-function exponent(a){
-    // Exponent
-    // Numbers with exponents of 10 are displayed with an "e", for example 4.5e+100 or 4.5e-100. This function represents 10^x. Numbers are automatically displayed in the format when the number is too large or too small for the display. To enter a number in this format use the exponent key "EE". To do this enter the mantissa (the non exponent part) then press "EE" or use the keyboard shortcut key "e" and then enter the exponent.
-}
-
-function percent(a){
+function percent(a) {
     // Percent
     // The percent function is used by clicking on the "%" or using the keyboard. The percent function is used to add, subtract, multiply, or divide a percent of a number. It's used to calculate the percent of a number. Here are some examples:
 
@@ -183,29 +267,16 @@ function percent(a){
 
 // Memory Functions
 // The memory functions allows you to store and recall calculations using a temporary stack storage element.
-
-function addToMemory(){
-    // The memory plus function is used by clicking on the "M+" button. This adds the value to whatever is stored in memory (initially this value is zero).
-}
-
-function removeFromMemory(){
-    // The memory minus function is used by clicking on the "M-" button. This subtracts the value from whatever is currently stored in memory.
-}
-
-function recallCalc(){
-    // The memory recall function is used by clicking on the "MR" button. This recalls the value from the memory and places it into the working area. The value is still kept in memory.
-}
-
-function clearMemory(){
+function clearMemory() {
     // deletes all stored history
     var historyTable = document.getElementById('historyTable');
 
-    while(historyTable.rows.length > 0) {
+    while (historyTable.rows.length > 0) {
         historyTable.deleteRow(0);
-    } 
+    }
 }
 
-function clearArea(){
+function clearArea() {
     document.getElementById("workspace").value = '';
 }
-    
+

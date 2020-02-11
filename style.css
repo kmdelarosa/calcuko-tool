@@ -4,25 +4,29 @@
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
+  border: 1px solid black;
+}
+
+.history, .calculator {
+  display: inline-block;
+  text-align:center;
 }
 
 .history {
   height:100px;
-  color: #ffffff;
+  color: #95c5c8;
   overflow: auto;
 }
 
 .history-table {
-  width: 340px;
+  width: 345px;
 }
 
 .history-item {
   width: 328px;
 }
 
-.history, .calculator {
-  display: inline-block;
-  text-align:center;
+.calculator {
   padding-left:2px;
 }
 
@@ -36,12 +40,14 @@ table, th, td {
   font-size:15px;
 }
 
-.num-key {
+.num-key, .sym-key {
   font-size:25px;
+  background-color: #F0C0AA;
+  color: #000000;
 }
 
 .func-key, .tool {
-  background-color: #0042ad;
+  background-color: #386E72;
   color: #ffffff;
   font-size:18px;
 }
@@ -62,7 +68,9 @@ table, th, td {
   height:75px;
   position: absolute;
   left: 50%;
+  bottom: 80%;
   transform: translate(-50%, -50%);
   text-align: center;
   padding-block: 1px;
+  color: #000000;
 }
