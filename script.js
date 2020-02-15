@@ -58,13 +58,13 @@ function buttonClick(value) {
 function processInputValues(value, source) {
 
     var digitsOnly = /[1234567890.]/g;
-    var operatorsOnly = /[+|-|/|*|%|(|)|%]/g;
+    var operatorsOnly = /[+|-|/|*|%|(|)]/g;
 
     const inputValue = value.toLowerCase();
     var result;
 
     if (source == 'input') {
-        if (inputValue.match(digitsOnly) != null || inputValue.match(operatorsOnly) != null) {
+        if (inputValue.match(digitsOnly) != null || inputValue.match(operatorsOnly) != null || inputValue == '-') {
             result = true;
         } else {
             result = false;
@@ -240,7 +240,7 @@ function solvePostFixNotation(postfix) {
             if (postfix[i] === "+") {
                 resultStack.push(add(parseFloat(a), parseFloat(b)));
             } else if (postfix[i] === "-") {
-                resultStack.push(sub(parseFloat(b), parseFloat(a)));
+                resultStack.push(sub(parseFloat(a), parseFloat(b)));
             } else if (postfix[i] === "*") {
                 resultStack.push(multiply(parseFloat(a), parseFloat(b)));
             } else if (postfix[i] === "/") {
