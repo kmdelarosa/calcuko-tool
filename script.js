@@ -23,21 +23,27 @@ function buttonClick(value) {
 
     if (value.match(funcOnly) == null) {
         if (value != '=') {
-            document.getElementById("workspace").value = (document.getElementById("workspace").value + value);
+            document.getElementById("workspace").value = (value == '^' ? (document.getElementById("workspace").value + (value+'2')):(document.getElementById("workspace").value + value));
         }
         else {
             hideErrorExpression();
 
             calculation = document.getElementById("workspace").value;
+            if(calculation.includes('^')){
+                calculation = calculation.replace('^2','^');
+            }
             inputValidation = processInputValues(calculation, 'input');
-
+            
             if (inputValidation !== 'invalid') {
 
                 postFixNotation = processCalculation(calculation);
-                answer = solvePostFixNotation(postFixNotation);
-
+                answer = (postFixNotation != null ? solvePostFixNotation(postFixNotation) : 'error');
+                
                 if(checkNumeric(answer)){
-                    addRow(calculation + ' = ' + answer);
+                    if(calculation.includes('^')){
+                        calculation = calculation.replace('^','^2');
+                    }
+                    addRow(calculation + ' = ' + (answer % 1 != 0 ? answer.toFixed(2) : answer.toFixed()));
                     document.getElementById("workspace").value = '';
                 }
                 else{
@@ -51,8 +57,8 @@ function buttonClick(value) {
 
 function processInputValues(value, source) {
 
-    var digitsOnly = /[1234567890]/g;
-    var operatorsOnly = /[+|-|/|*|%|(|)]/g;
+    var digitsOnly = /[1234567890.]/g;
+    var operatorsOnly = /[+|-|/|*|%|(|)|%]/g;
 
     const inputValue = value.toLowerCase();
     var result;
@@ -105,10 +111,14 @@ function processCalculation(value) {
 
     var outputQueue = "";
     var operatorStack = [];
+    
+    var digitsOnly = /[1234567890.]/g;
+    var operatorsOnly = "^*/+-√%";
 
     var operators = {
-        "√": { precedence: 4, associativity: "Left" },
-        "^": { precedence: 4, associativity: "Right" },
+        "√": { precedence: 4, associativity: "Right" },
+        "^": { precedence: 4, associativity: "Left" },
+        "%": { precedence: 3, associativity: "Left" },
         "/": { precedence: 3, associativity: "Left" },
         "*": { precedence: 3, associativity: "Left" },
         "+": { precedence: 2, associativity: "Left" },
@@ -116,7 +126,7 @@ function processCalculation(value) {
     }
 
     val = value.replace(/\s+/g, "");
-    value = val.split(/([\+\-\*\/\^\(\)\√])/);
+    value = val.split(/([\+\-\*\/\^\(\)\√\%])/);
     value = removeSpaces(value);
 
     for (var i = 0; i < value.length; i++) {
@@ -124,20 +134,40 @@ function processCalculation(value) {
 
         if (checkNumeric(token)) {
             outputQueue += token + " ";
-        } else if ("^*/+-√".indexOf(token) !== -1) {
-            var o1 = token;
-            var o2 = operatorStack[operatorStack.length - 1];
-            while ("^*/+-√".indexOf(o2) !== -1 && ((operators[o1].associativity === "Left" && operators[o1].precedence <= operators[o2].precedence) || (operators[o1].associativity === "Right" && operators[o1].precedence < operators[o2].precedence))) {
-                outputQueue += operatorStack.pop() + " ";
-                o2 = operatorStack[operatorStack.length - 1];
+        } else if (operatorsOnly.indexOf(token) !== -1) {
+
+            if(token == '√' && value[i-1].match(digitsOnly)){
+                outputQueue = null;
+                break;
             }
-            operatorStack.push(o1);
+            
+            if(token == '^' && value[i+1] != null){
+                if(value[i+1].match(digitsOnly)){
+                    outputQueue = null;
+                    break;
+                }
+            }
+            
+            if(outputQueue != null){
+                var o1 = token;
+                var o2 = operatorStack[operatorStack.length - 1];
+                
+                while (operatorsOnly.indexOf(o2) !== -1 && ((operators[o1].associativity === "Left" && operators[o1].precedence <= operators[o2].precedence) || (operators[o1].associativity === "Right" && operators[o1].precedence < operators[o2].precedence))) {
+                    outputQueue += operatorStack.pop() + " ";
+                    o2 = operatorStack[operatorStack.length - 1];
+                }
+                
+                operatorStack.push(o1); 
+            }
+        
         } else if (token === "(") {
             operatorStack.push(token);
         } else if (token === ")") {
+            
             while (operatorStack[operatorStack.length - 1] !== "(") {
                 outputQueue += operatorStack.pop() + " ";
             }
+            
             operatorStack.pop();
         }
     }
@@ -188,7 +218,7 @@ function addRow(calculation) {
 }
 
 function solvePostFixNotation(postfix) {
-    
+
     var resultStack = [];
     postfix = postfix.split(" ");
 
@@ -203,20 +233,26 @@ function solvePostFixNotation(postfix) {
         if (checkNumeric(postfix[i])) {
             resultStack.push(postfix[i]);
         } else {
+            
             var a = resultStack.pop();
             var b = resultStack.pop();
+            
             if (postfix[i] === "+") {
-                resultStack.push(add(parseInt(a), parseInt(b)));
+                resultStack.push(add(parseFloat(a), parseFloat(b)));
             } else if (postfix[i] === "-") {
-                resultStack.push(sub(parseInt(b), parseInt(a)));
+                resultStack.push(sub(parseFloat(b), parseFloat(a)));
             } else if (postfix[i] === "*") {
-                resultStack.push(multiply(parseInt(a), parseInt(b)));
+                resultStack.push(multiply(parseFloat(a), parseFloat(b)));
             } else if (postfix[i] === "/") {
-                resultStack.push(divide(parseInt(b), parseInt(a)));
+                resultStack.push(divide(parseFloat(b), parseFloat(a)));
             } else if (postfix[i] === "^") {
-                resultStack.push(square(parseInt(a)));
+                resultStack.push(square(parseFloat(a)));
+                if(b != null){resultStack.push(parseFloat(b))};
             } else if (postfix[i] === "√") {
-                resultStack.push(sRoot(parseInt(a)));
+                resultStack.push(sRoot(parseFloat(a)));
+                if(b != null){resultStack.push(parseFloat(b))};
+            }else if (postfix[i] === "%") {
+                resultStack.push(mod(parseFloat(b), parseFloat(a)));
             }
         }
     }
@@ -233,7 +269,7 @@ function add(a, b) {
 }
 
 function sub(a, b) {
-    return a - b;
+    return b - a;
 }
 
 function multiply(a, b) {
@@ -244,10 +280,6 @@ function divide(a, b) {
     return a / b;
 }
 
-function negative(a) {
-    return (-1 * a);
-}
-
 function square(a) {
     return a * a;
 }
@@ -256,19 +288,12 @@ function sRoot(a) {
     return Math.sqrt(a);
 }
 
-function percent(a) {
-    // Percent
-    // The percent function is used by clicking on the "%" or using the keyboard. The percent function is used to add, subtract, multiply, or divide a percent of a number. It's used to calculate the percent of a number. Here are some examples:
-
-    // 73+4.5% = 76.285.
-
-    // 18/80% = 1.25.
+function mod(a,b) {
+    return a % b;
 }
 
-// Memory Functions
-// The memory functions allows you to store and recall calculations using a temporary stack storage element.
 function clearMemory() {
-    // deletes all stored history
+   
     var historyTable = document.getElementById('historyTable');
 
     while (historyTable.rows.length > 0) {
