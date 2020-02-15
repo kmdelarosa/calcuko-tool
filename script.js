@@ -1,10 +1,10 @@
 var arrHead = new Array();
 arrHead = [''];
 
+// preps the space on page load
 document.addEventListener('DOMContentLoaded', () => {
     'use strict';
 
-    // document.getElementById("notif").style.visibility = "hidden";
     hideErrorExpression();
     document.getElementById("workspace").value = "";
 
@@ -15,6 +15,48 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 });
 
+// creates table for calculation history
+function createTable() {
+    var historyTable = document.createElement('table');
+    historyTable.setAttribute('id', 'historyTable');
+    historyTable.setAttribute('class', 'history-table');
+
+    var tr = historyTable.insertRow(-1);
+
+    for (var h = 0; h < arrHead.length; h++) {
+        var th = document.createElement('th');
+        th.innerHTML = arrHead[h];
+        tr.appendChild(th);
+    }
+
+    var div = document.getElementById('history');
+    div.appendChild(historyTable);
+}
+
+// adds new row to calculation history table
+function addRow(calculation) {
+    var historyTable = document.getElementById('historyTable');
+
+    var count = historyTable.rows.length;
+    var tr = historyTable.insertRow(count);
+    tr = historyTable.insertRow(count);
+
+    for (var c = 0; c < arrHead.length; c++) {
+        var td = document.createElement('td');
+        td = tr.insertCell(c);
+
+        var ele = document.createElement('input');
+        ele.setAttribute('type', 'text');
+        ele.setAttribute('value', calculation);
+        ele.setAttribute('readonly', true);
+        ele.setAttribute('id', 'calc' + c);
+        ele.setAttribute('class', 'calc' + c + ' history-item');
+        td.appendChild(ele);
+
+    }
+}
+
+// processes value when button is clicked
 function buttonClick(value) {
 
     var funcOnly = /['sqrd'|sqrt]/g;
@@ -55,6 +97,7 @@ function buttonClick(value) {
     }
 }
 
+// validates input value
 function processInputValues(value, source) {
 
     var digitsOnly = /[1234567890.]/g;
@@ -74,41 +117,39 @@ function processInputValues(value, source) {
             showErrorExpression('Invalid input value');
             result = 'invalid';
         }
-
         return result;
     }
-
     return '';
-
 }
 
+// removes spaces from the inputted values
 function removeSpaces(arrayValues) {
     for (var i = 0; i < arrayValues.length; i++) {
         if (arrayValues[i] === "") {
             arrayValues.splice(i, 1);
         }
     }
-
     return arrayValues;
 }
 
+// validates if numeric value
 function checkNumeric(value) {
-
     return !isNaN(parseFloat(value)) && isFinite(value);
-
 }
 
+// show error notification
 function showErrorExpression(message){
     document.getElementById("notif").innerHTML = message;
     document.getElementById("notif").style.visibility = "visible";  
 }
 
+// hide  error notification
 function hideErrorExpression(){
     document.getElementById("notif").style.visibility = "hidden"; 
 }
 
+// processes input value and generates postfix order
 function processCalculation(value) {
-
     var outputQueue = "";
     var operatorStack = [];
     
@@ -167,7 +208,6 @@ function processCalculation(value) {
             while (operatorStack[operatorStack.length - 1] !== "(") {
                 outputQueue += operatorStack.pop() + " ";
             }
-            
             operatorStack.pop();
         }
     }
@@ -177,46 +217,7 @@ function processCalculation(value) {
     return outputQueue;
 }
 
-function createTable() {
-
-    var historyTable = document.createElement('table');
-    historyTable.setAttribute('id', 'historyTable');
-    historyTable.setAttribute('class', 'history-table');
-
-    var tr = historyTable.insertRow(-1);
-
-    for (var h = 0; h < arrHead.length; h++) {
-        var th = document.createElement('th');
-        th.innerHTML = arrHead[h];
-        tr.appendChild(th);
-    }
-
-    var div = document.getElementById('history');
-    div.appendChild(historyTable);
-}
-
-function addRow(calculation) {
-    var historyTable = document.getElementById('historyTable');
-
-    var count = historyTable.rows.length;
-    var tr = historyTable.insertRow(count);
-    tr = historyTable.insertRow(count);
-
-    for (var c = 0; c < arrHead.length; c++) {
-        var td = document.createElement('td');
-        td = tr.insertCell(c);
-
-        var ele = document.createElement('input');
-        ele.setAttribute('type', 'text');
-        ele.setAttribute('value', calculation);
-        ele.setAttribute('readonly', true);
-        ele.setAttribute('id', 'calc' + c);
-        ele.setAttribute('class', 'calc' + c + ' history-item');
-        td.appendChild(ele);
-
-    }
-}
-
+// evaluates postfix notation
 function solvePostFixNotation(postfix) {
 
     var resultStack = [];
@@ -264,34 +265,42 @@ function solvePostFixNotation(postfix) {
     }
 }
 
+// adds input values a and b
 function add(a, b) {
     return a + b;
 }
 
+// subtracts input values b from a
 function sub(a, b) {
     return b - a;
 }
 
+// multiplies input values a and b
 function multiply(a, b) {
     return a * b;
 }
 
+// divides input values a by b
 function divide(a, b) {
     return a / b;
 }
 
+// returns the square of value a
 function square(a) {
     return a * a;
 }
 
+// returns the square root of a
 function sRoot(a) {
     return Math.sqrt(a);
 }
 
+// returns the remainder value when a is divided by b
 function mod(a,b) {
     return a % b;
 }
 
+// clears calculation history table
 function clearMemory() {
    
     var historyTable = document.getElementById('historyTable');
@@ -301,6 +310,7 @@ function clearMemory() {
     }
 }
 
+// clears calculation area 
 function clearArea() {
     document.getElementById("workspace").value = '';
 }
